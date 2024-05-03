@@ -1,0 +1,124 @@
+{% extends 'operaminiclone/base.html' %}
+{% load static %}
+{% block title %} Home {% endblock title %}
+
+    {% block main-content %} 
+
+    <div class="container mt-4">
+        <div class="row">
+            <!-- Loop through articles from the database -->
+            <div class="col-md-8 col-sm-12 mb-4 offset-md-2">
+                <div class="card">
+                    <img src="{{blog.coverimage.url}}" class="card-img-top" alt="Article Image" style="height: 280px;">
+                    <div class="card-body">
+                        <h5 class="card-title">{{ blog.heading }}</h5>
+                        <p class="card-text">
+                            <span class="text-muted">In       <i>{{blog.categories}}</i></span>    |   <span class="text-muted"> {{blog.pub_date}}  </span>
+                        </p>
+                        <p class="card-text">
+                            {{ blog.content | safe }} 
+                        </p>
+                    </div>
+                </div>
+            </div>
+
+    </div>
+<!-- comments.html -->
+
+<!-- comments section -->
+<div class="list-group">
+
+    <!-- Comment Form at the Top -->
+    <div class="list-group-item">
+        <form method="post"  nonvalidate >
+            {% csrf_token %}
+            <div class="form-group">
+                <textarea name="comment" class="form-control" id="comment-text" rows="7" placeholder="Write a comment"></textarea>
+            </div>
+            <br>
+            <button type="button" class="btn bg-dark text-white" id="submit-comment-btn"> Comment </button>
+        </form>
+    </div>
+
+    <p id="result" class="text-danger"> </p>
+
+
+    {% for comment, nested_replies in comments_with_replies.items %}
+        <div class="list-group-item">
+
+            <p>{{ comment.reader | capfirst}}</p> <span class="date">      {{  comment.pub_date }}   </span>
+
+
+            <p>{{ comment.text }}</p>
+
+
+            <!-- Reply button and form for Comment -->
+            <button class="btn btn-link reply-button" data-toggle="collapse" data-target="#reply-comment-{{ comment.id }}">Reply</button>
+
+            <div id="reply-comment-{{ comment.id }}" class="collapse reply-form">
+                <form method="post" action="">
+                    {% csrf_token %}
+                    <div class="form-group">
+                        <textarea name="reply" class="form-control" placeholder="Write a reply to the comment"></textarea>
+                    </div>
+
+                    <button type="submit" class="btn btn-primary">Submit Reply</button>
+                </form>
+            </div>
+
+            <!-- Nested replies -->
+            <div class="list-group nested-replies">
+                {% for reply in comment.replies.all %}
+                    <div class="list-group-item">
+                        <p>{{ reply.text }}</p>
+                        <p class="text-muted">Posted on {{ reply.timestamp }}</p>
+
+                        <!-- Reply button and form for Reply -->
+                        <button class="btn btn-link reply-button" data-toggle="collapse" data-target="#reply-reply-{{ reply.id }}">Reply</button>
+
+                        <div id="reply-reply-{{ reply.id }}" class="collapse reply-form">
+                            <form method="post" action="">
+                                {% csrf_token %}
+                                <div class="form-group">
+                                    <textarea name="reply" class="form-control" placeholder="Write a reply to the reply"></textarea>
+                                </div>
+                                <button type="submit" class="btn btn-primary">Reply</button>
+                            </form>
+                        </div>
+                    </div>
+                {% endfor %}
+            </div>
+        </div>
+    {% endfor %}
+</div>
+
+
+
+    {% endblock main-content %}
+    
+    {% for comment, nested_replies in comments_with_replies.items %}
+    <div class="comment">
+        <p>{{ comment.text }}</p>
+        <!-- Display comment-specific information here -->
+        
+        <!-- Display replies for this comment -->
+        <ul>
+            {% for reply, child_replies in nested_replies.items %}
+                <li>
+                    <p>{{ reply.text }}</p>
+                    <!-- Display reply-specific information here -->
+                    
+                    <!-- Display nested replies for this reply -->
+                    <ul>
+                        {% for child_reply in child_replies %}
+                            <li>
+                                <p>{{ child_reply.text }}</p>
+                                <!-- Display child reply-specific information here -->
+                            </li>
+                        {% endfor %}
+                    </ul>
+                </li>
+            {% endfor %}
+        </ul>
+    </div>
+{% endfor %}
